@@ -5,19 +5,20 @@ const ProductsContext = createContext();
 
 export function ProductsProvider({ children }) {
   const [products, setProducts] = useState([]);
+  const [isLoggedIn,setIsLoggedIn] = useState(!!localStorage.getItem('jwt'));
 
-  const token = localStorage.getItem('jwt');
 
     useEffect(() => {
     const fetchProducts = async () => {
-      if (!token) {
+      if (!isLoggedIn) {
         setProducts([]);
         return;
       }
       try {
         const res = await axios.get('http://localhost:8000/products', {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` },
         });
+        console.log(isLoggedIn);
         setProducts(res.data);
       } catch (err) {
         console.error('Failed to fetch products:', err);
@@ -26,10 +27,12 @@ export function ProductsProvider({ children }) {
     };
 
     fetchProducts();
-  }, [token]);
+  }, [isLoggedIn]);
+
+  const clearProducts = () => setProducts([]);
 
   return (
-    <ProductsContext.Provider value={{ products, setProducts }}>
+    <ProductsContext.Provider value={{ isLoggedIn,setIsLoggedIn,products, setProducts, clearProducts }}>
       {children}
     </ProductsContext.Provider>
   );

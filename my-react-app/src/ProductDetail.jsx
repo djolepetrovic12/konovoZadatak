@@ -2,21 +2,35 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useProducts } from './ProductsContext';
 import DOMPurify from 'dompurify';
+import axios from 'axios';
 
 export default function ProductDetail() {
   const { sku } = useParams();
   const navigate = useNavigate();
   const { products } = useProducts();
   const [product, setProduct] = useState(null);
+  const token = localStorage.getItem('jwt');
 
   useEffect(() => {
-    const found = products.find(p => p.sku === sku);
-    if (!found) {
+    if (!token) {
       navigate('/');
-    } else {
-      setProduct(found);
+      return;
     }
-  }, [sku, products]);
+
+    console.log(sku);
+    axios.get(`http://localhost:8000/products/${sku}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .then(res => {
+      setProduct(res.data);
+    })
+    .catch(err => {
+      console.error('Failed to load product:', err);
+      //navigate('/products');
+    })
+  }, [sku, token, navigate]);
 
   if (!product) return <div>Učitavanje...</div>;
 

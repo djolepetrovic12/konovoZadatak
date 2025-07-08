@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Alert,
+  Paper,
+  InputLabel,
+
+} from '@mui/material';
+import { useProducts } from './ProductsContext';
 
 export default function Login() {
   const [token, setToken] = useState(localStorage.getItem('jwt'));
@@ -8,12 +19,8 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const {setIsLoggedIn} = useProducts();
 
-  useEffect(() => {
-    if (token) {
-      navigate('/products');
-    }
-  }, [token, navigate]);
 
   const login = async (e) => {
     e.preventDefault(); // ovo je neophodno da bi post request mogao da se zavrsi do kraja jer bi klikom na ''prijavi se'' ucitalo ponovo stranicu i mozda se ne bi zavrsio login
@@ -23,11 +30,10 @@ export default function Login() {
         password
       });
       const token = res.data.token;
-      //console.log(res.data);
       if(token)
       {
         localStorage.setItem('jwt', token);
-        setToken(token);
+        setIsLoggedIn(true);
         navigate('/products');
       }
       console.log('hello')
@@ -40,14 +46,55 @@ export default function Login() {
   };
 
   return (
-    <div>
-    <form onSubmit={login} >
-      <h2>Prijava</h2>
-      {error && <p>{error}</p>}
-      <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Korisničko ime"  required/>
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Lozinka" required/>
-      <button type="submit" >Prijavi se</button>
-    </form>
-    </div>
+
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="100vh"
+      sx={{
+        backgroundImage: 'url(./slika.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      <Paper elevation={4} sx={{ p: 4, width: '30%', minWidth:'350px', backdropFilter: 'blur(6px)', bgcolor: 'rgba(255,255,255,0.8)' }}>
+      <form onSubmit={login} >
+        
+        <div>
+        <Typography variant="h5" align="center" gutterBottom>Prijava</Typography>
+        </div>
+
+        <div>
+        <InputLabel id="username-label"></InputLabel>
+        <TextField
+        type='text'
+        sx={{ width: '40%', margin:'10px'}}
+        size='small'
+        labelid="username-label" label="korisnicko ime"
+        value={username} onChange={(e) => setUsername(e.target.value)}  required
+        />
+        </div>
+        <div>
+        <InputLabel id="password-label"></InputLabel>
+        <TextField
+        type='password'
+        sx={{ width: '40%', margin:'10px'}}
+        size='small'
+        labelid="password-label" label="lozinka"
+        value={password} onChange={(e) => setPassword(e.target.value)} required
+        />
+        </div>
+        <div>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        </div>
+        <div>
+        <Button variant='contained' type="submit" >Prijavi se</Button>
+        </div>
+
+      </form>
+    </Paper>
+    </Box>
+    
   );
 }

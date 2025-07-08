@@ -1,5 +1,6 @@
 import requests
 import re
+from fastapi import HTTPException
 
 BASE_URL = "https://zadatak.konovo.rs"
 
@@ -56,9 +57,24 @@ def fetch_and_process_products(token: str, kategorija: str = None, search: str =
     return processed
 
 
-def get_product_by_id(product_id: int, token: str):
-    products = fetch_products_from_external_api(token)
-    for p in products:
-        if p.get("id") == product_id:
-            return process_product(p)
-    return None
+def get_product_by_id(sku: int, token: str):
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    print("hello I am services.py")
+    print(f"{BASE_URL}/products/{sku}")
+    print(token)
+
+    try:
+        response = requests.get(f"{BASE_URL}/products/{sku}", headers=headers)
+        print(response)
+        if response.status_code == 404:
+            raise HTTPException(status_code=404, detail="Product not found")
+        elif response.status_code != 200:
+            raise HTTPException(status_code=500, detail="Failed to fetch product")
+
+        return response.json()
+
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Request error: {str(e)}")

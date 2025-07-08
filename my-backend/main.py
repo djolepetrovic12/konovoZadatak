@@ -51,13 +51,20 @@ def get_products(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/products/{product_id}")
-def get_product(product_id: int, authorization: Optional[str] = Header(None)):
+@app.get("/products/{sku}")
+def get_product(sku: int, authorization: Optional[str] = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="JWT token missing or invalid")
 
     token = authorization.split(" ")[1]
-    product = get_product_by_id(product_id, token)
+
+    print("hello I am the main.py")
+
+
+    product = get_product_by_id(sku, token)
+
+    print(product)
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product

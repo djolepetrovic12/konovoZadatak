@@ -2,36 +2,37 @@ import { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProducts } from './ProductsContext';
 import DOMPurify from 'dompurify';
+import {
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Box,
+  Typography,
+} from '@mui/material';
+import {useDebounce} from 'use-debounce';
 
 export default function Products() {
   const navigate = useNavigate();
-  const { products } = useProducts();
+  const { products, clearProducts } = useProducts();
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [category, setCategory] = useState('');
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debouncedSearch] = useDebounce(search,500);
 
   const token = localStorage.getItem('jwt');
 
-  useEffect(() => {
-    if (!token) {
-      navigate('/');
-      return;
-    }
-  }, [token]);
+   const uniqueCategories = [
+    '',
+    ...new Set(products.map(p => p.categoryName).filter(Boolean))
+  ];
 
-  useEffect(() => {
-  const handler = setTimeout(() => {
-    setDebouncedSearch(search);
-  }, 2000);
-
-  return () => {
-    clearTimeout(handler);
-  };
-}, [search]);
 
 
   useEffect(()=>{
+
 
     if (debouncedSearch.length === 0 || debouncedSearch.length >= 3) {
 
@@ -59,15 +60,59 @@ export default function Products() {
 
   return (
     <div>
-      <h2>Proizvodi</h2>
-      <input placeholder="Pretraga" value={search} onChange={(e) => setSearch(e.target.value)} />
-      <input placeholder="Kategorija" value={category} onChange={(e) => setCategory(e.target.value)} />
+      <Box
+      display="flex"
+      flexDirection="row"
+      alignItems="center"
+      justifyContent="center"
+      gap={2}
+      mt={2}
+      >
+      <InputLabel id="pretraga-label"></InputLabel>
+      <TextField
+      sx={{ width: '40%'}}
+      size='small'
+      labelId="pretraga-label" label="Pretraga" value={search} onChange={(e) => setSearch(e.target.value)}
+      />
 
+      <FormControl
+      sx={{ width: '40%', padding:'0px'}}
+      fullWidth
+      size='small'
+      >
+      <InputLabel id="category-label">Kategorija</InputLabel>
+      <Select
+        labelId="category-label"
+        value={category}
+        label="Kategorija"
+        onChange={(e) => setCategory(e.target.value)}
+      >
+        <MenuItem value="">Sve kategorije</MenuItem>
+        {uniqueCategories
+          .filter(cat => cat !== '')
+          .map(cat => (
+            <MenuItem key={cat} value={cat}>
+              {cat}
+            </MenuItem>
+        ))}
+      </Select>
+      </FormControl>
 
+      </Box>
       <ul>
-        {filteredProducts.map(p => (
+        {filteredProducts.map((p,index) => (
             
-          <li key={`${p.sku} - ${p.naziv}`} onClick={() => navigate(`/products/${p.sku}`)}>
+          <li key={`${p.sku} - ${p.naziv} - ${index}`} onClick={() => {
+            
+            const token2 = localStorage.getItem('jwt');
+            if(!token2)
+            {
+              localStorage.clear() // znam da ovde nema vise tokena, al za svaki slucaj sam izbrisao ako u buducnosti dodam nesto sto se cuva u local storage, a inace ne bih ni pisao ovu liniju koda jer svakako nema vise tokena u localStorage
+              navigate('/')
+              return;
+            }
+            else
+              navigate(`/products/${p.sku}`);}}>
             
             {p.naziv} - {p.categoryName} - <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.description) }} /> - {p.price}RSD
           </li>
@@ -76,12 +121,13 @@ export default function Products() {
         }
       </ul>
 
-      <button onClick={() => {
+      <Button variant="outlined" onClick={() => {
         localStorage.removeItem('jwt');
+        clearProducts();
         navigate('/');
       }}>
         Odjavi se
-      </button>
+      </Button>
     </div>
   );
 }
