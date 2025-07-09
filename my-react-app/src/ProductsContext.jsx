@@ -8,28 +8,6 @@ export function ProductsProvider({ children }) {
   const [isLoggedIn,setIsLoggedIn] = useState(!!localStorage.getItem('jwt'));
   const [categories, setCategories] = useState([]);
 
-    /*
-    useEffect(() => {
-    const fetchProducts = async () => {
-      if (!isLoggedIn) {
-        setProducts([]);
-        return;
-      }
-      try {
-        const res = await axios.get('http://localhost:8000/products', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` },
-        });
-        console.log(isLoggedIn);
-        setProducts(res.data);
-      } catch (err) {
-        console.error('Failed to fetch products:', err);
-        setProducts([]);
-      }
-    };
-
-    fetchProducts();
-  }, [isLoggedIn]);*/
-
   const clearProducts = () => setProducts([]);
 
   return (

@@ -5,7 +5,7 @@ from services import fetch_and_process_products
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 import requests
-from globalState import globalProductsList, last_fetch_time, FETCH_COOLDOWN_SECONDS
+from globalState import globalProductsList, last_fetch_time, FETCH_COOLDOWN_SECONDS, globalCategories
 from dotenv import load_dotenv
 import os
 import time
@@ -50,23 +50,29 @@ def get_products(
 
     token = authorization.split(" ")[1]
 
+    global globalProductsList, last_fetch_time, globalCategories
+
+    current_time = time.time()
+    time_since_last_fetch = current_time - last_fetch_time
+
+
+    if not globalProductsList or time_since_last_fetch >= FETCH_COOLDOWN_SECONDS:
+        try:
+            products = fetch_and_process_products(token)
+
+            globalProductsList = {product["sku"]: product for product in products}
+            last_fetch_time = current_time
+
+            globalCategories = sorted(list({ p.get("categoryName") for p in globalProductsList.values() if p.get("categoryName")}))
+        
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    else:
+        print(f"Using cached data, last updated {format_seconds(time_since_last_fetch)} ago")
+
     
-    try:
-        products = fetch_and_process_products(token)
 
-        global globalProductsList
-        globalProductsList = {product["sku"]: product for product in products}
-
-        categories = {
-        p.get("categoryName")
-        for p in globalProductsList.values()
-        if p.get("categoryName")
-        }
-
-        return sorted(list(categories))
-         
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return globalCategories
 
 
 @app.get("/search")
@@ -83,7 +89,6 @@ def get_by_search(
     products = list(globalProductsList.values())
 
     if search:
-        print("Search:", search)
         search_lower = search.lower()
         products = [
             p for p in products
@@ -91,7 +96,6 @@ def get_by_search(
         ]
 
     if kategorija:
-        print("Kategorija:", kategorija)
         category_lower = kategorija.lower()
         products = [
             p for p in products
@@ -115,3 +119,11 @@ def get_product(sku: str, authorization: Optional[str] = Header(None)):
     if not product1:
         raise HTTPException(status_code=404, detail=f"Product with SKU '{sku}' not found")
     return product1
+
+
+def format_seconds(seconds: int) -> str:
+    totalSeconds = int(seconds)
+    hours = totalSeconds // 3600
+    minutes = (totalSeconds % 3600) // 60
+    secs = totalSeconds % 60
+    return f"{hours}h {minutes}m {secs}s"

@@ -40,7 +40,6 @@ export default function Login() {
             Authorization: `Bearer ${token}`,
           }
         });
-        console.log(categoryRes.data);
         setCategories(categoryRes.data);
 
         
