@@ -1,8 +1,13 @@
 import requests
 import re
 from fastapi import HTTPException
+from globalState import globalProductsList
+from dotenv import load_dotenv
+import os
 
-BASE_URL = "https://zadatak.konovo.rs"
+load_dotenv()
+
+BASE_URL = os.getenv("BASE_URL")
 
 def fetch_products_from_external_api(jwt_token: str):
     headers = {
@@ -18,8 +23,6 @@ def fetch_products_from_external_api(jwt_token: str):
 
 
 def process_product(product: dict) -> dict:
-    
-    #print(product["categoryName"])
 
     if product.get("categoryName") and product.get("categoryName").lower() == "monitori":
         product["price"] = round(float(product["price"]) * 1.1, 2)# uvek mozemo i da ga zaokruzimo na integer ali zbog duha dinara ostavio sam dve decimale zbog "para" koji nisu vec dugi niz godina u upotrebi
@@ -38,43 +41,8 @@ def process_product(product: dict) -> dict:
     return product
 
 
-def fetch_and_process_products(token: str, kategorija: str = None, search: str = None):
+def fetch_and_process_products(token: str):
     raw_products = fetch_products_from_external_api(token)
-    processed = [process_product(p) for p in raw_products]
-
-    if kategorija:
-        processed = [
-            p for p in processed if p.get("kategorija", "").lower() == kategorija.lower()
-        ]
-
-    if search:
-        search = search.lower()
-        processed = [
-            p for p in processed
-            if search in p.get("naziv", "").lower() or search in p.get("opis", "").lower()
-        ]
+    processed = [process_product(p) for p in raw_products] # mozda je ovo neispravna primena zahteva za obradu podataka unutar jednog proizvoda ali posto sam odlucio da vam neopteretim server i podatke sa vaseg servera cuvam na mom backend-u, onda sam mislio da je efikasnije da odmah pri cuvanju proizvoda u globalni dict da ih odmah obradim sto se tice monitora i reci 'brzina'
 
     return processed
-
-
-def get_product_by_id(sku: int, token: str):
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
-
-    print("hello I am services.py")
-    print(f"{BASE_URL}/products/{sku}")
-    print(token)
-
-    try:
-        response = requests.get(f"{BASE_URL}/products/{sku}", headers=headers)
-        print(response)
-        if response.status_code == 404:
-            raise HTTPException(status_code=404, detail="Product not found")
-        elif response.status_code != 200:
-            raise HTTPException(status_code=500, detail="Failed to fetch product")
-
-        return response.json()
-
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Request error: {str(e)}")

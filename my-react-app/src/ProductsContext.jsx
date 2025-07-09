@@ -6,8 +6,9 @@ const ProductsContext = createContext();
 export function ProductsProvider({ children }) {
   const [products, setProducts] = useState([]);
   const [isLoggedIn,setIsLoggedIn] = useState(!!localStorage.getItem('jwt'));
+  const [categories, setCategories] = useState([]);
 
-
+    /*
     useEffect(() => {
     const fetchProducts = async () => {
       if (!isLoggedIn) {
@@ -27,12 +28,12 @@ export function ProductsProvider({ children }) {
     };
 
     fetchProducts();
-  }, [isLoggedIn]);
+  }, [isLoggedIn]);*/
 
   const clearProducts = () => setProducts([]);
 
   return (
-    <ProductsContext.Provider value={{ isLoggedIn,setIsLoggedIn,products, setProducts, clearProducts }}>
+    <ProductsContext.Provider value={{ isLoggedIn,setIsLoggedIn,products, setProducts, clearProducts,categories,setCategories }}>
       {children}
     </ProductsContext.Provider>
   );

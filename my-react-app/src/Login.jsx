@@ -9,8 +9,8 @@ import {
   Alert,
   Paper,
   InputLabel,
-
 } from '@mui/material';
+import LoginIcon from '@mui/icons-material/Login';
 import { useProducts } from './ProductsContext';
 
 export default function Login() {
@@ -19,7 +19,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const {setIsLoggedIn} = useProducts();
+  const {setIsLoggedIn,categories,setCategories} = useProducts();
 
 
   const login = async (e) => {
@@ -34,10 +34,19 @@ export default function Login() {
       {
         localStorage.setItem('jwt', token);
         setIsLoggedIn(true);
+
+        const categoryRes = await axios.get("http://localhost:8000/startup", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        });
+        console.log(categoryRes.data);
+        setCategories(categoryRes.data);
+
+        
+        localStorage.setItem('categories', categoryRes.data.join('-'));
         navigate('/products');
       }
-      console.log('hello')
-
     } catch (err) {
       setError('Neuspešna prijava. Proverite podatke.');
       console.error("Login error:", err);
@@ -53,7 +62,7 @@ export default function Login() {
       alignItems="center"
       minHeight="100vh"
       sx={{
-        backgroundImage: 'url(./slika.jpg)',
+        backgroundImage: 'url(./assets/slika.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -69,7 +78,7 @@ export default function Login() {
         <InputLabel id="username-label"></InputLabel>
         <TextField
         type='text'
-        sx={{ width: '40%', margin:'10px'}}
+        sx={{ width: '100%', margin:'10px'}}
         size='small'
         labelid="username-label" label="korisnicko ime"
         value={username} onChange={(e) => setUsername(e.target.value)}  required
@@ -79,17 +88,28 @@ export default function Login() {
         <InputLabel id="password-label"></InputLabel>
         <TextField
         type='password'
-        sx={{ width: '40%', margin:'10px'}}
+        sx={{ width: '100%', margin:'10px'}}
         size='small'
         labelid="password-label" label="lozinka"
         value={password} onChange={(e) => setPassword(e.target.value)} required
         />
         </div>
         <div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+        {error && (
+          <Alert
+          sx={{ width: '100%', margin:'10px'}}
+          severity="error">
+            {error}
+          </Alert>
+        )}
         </div>
         <div>
-        <Button variant='contained' type="submit" >Prijavi se</Button>
+        <Button 
+        variant='contained' type="submit" 
+        startIcon={<LoginIcon />}
+        sx={{ width: '100%', margin:'10px'}}
+        >Prijavi se
+        </Button>
         </div>
 
       </form>
