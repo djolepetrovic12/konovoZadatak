@@ -63,7 +63,6 @@ const fetchProducts = async () => {
           },
         });
         setProducts(res.data);
-        console.log(res.data);
         setCurrentPage(1);
       } catch (err) {
         console.error('Failed to fetch products:', err);
